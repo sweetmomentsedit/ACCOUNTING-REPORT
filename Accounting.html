@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order Management</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#f4f4f4;
+padding:20px;
+max-width:1000px;
+margin:auto;
+}
+
+.container{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,.1);
+}
+
+h2,h3{
+margin-bottom:15px;
+}
+
+input,select,button{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:5px;
+box-sizing:border-box;
+}
+
+button{
+background:#0066ff;
+color:white;
+border:none;
+cursor:pointer;
+font-size:16px;
+}
+
+button:hover{
+opacity:.9;
+}
+
+button:disabled{
+opacity:.6;
+cursor:not-allowed;
+}
+
+#status{
+margin-top:10px;
+font-weight:bold;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+background:white;
+}
+
+th,td{
+padding:12px;
+border:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#0066ff;
+color:white;
+}
+
+tr:nth-child(even){
+background:#f7f7f7;
+}
+
+.searchBox{
+display:flex;
+gap:10px;
+margin-top:10px;
+}
+
+.searchBox input{
+flex:1;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Order Management System</h2>
+
+<input id="order" placeholder="Order Number">
+
+<input id="description" placeholder="Description">
+
+<input id="customer" placeholder="Customer Number">
+
+<select id="payment">
+<option value="Paid Online">Paid Online</option>
+<option value="Cash">Cash</option>
+<option value="Downpayment">Downpayment</option>
+<option value="Unpaid">Unpaid</option>
+</select>
+
+<button id="saveBtn" onclick="save()">Save Order</button>
+
+<div id="status"></div>
+
+<hr>
+
+<h3>Search Order Number</h3>
+
+<div class="searchBox">
+
+<input id="searchOrder" placeholder="Enter Order Number">
+
+<button onclick="search()">Search</button>
+
+</div>
+
+<div id="result"></div>
+
+<hr>
+
+<h3>Order List</h3>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Order No.</th>
+<th>Description</th>
+<th>Customer No.</th>
+<th>Payment</th>
+</tr>
+
+</thead>
+
+<tbody id="tbody">
+
+</tbody>
+
+</table>
+
+</div>
+
+<script>
+
+const API="https://script.google.com/macros/s/AKfycbxScIAIu1hKFd42-LL95bLErkG-iWWiBCi_KFwLhr9_7DEE1_rYbZkpVplYvnFdQvdx/exec";
+// paste your Google Apps Script URL here
+
+
+function save(){
+
+let btn=document.getElementById("saveBtn");
+
+let status=document.getElementById("status");
+
+btn.disabled=true;
+
+btn.innerHTML="Saving...";
+
+status.innerHTML="";
+
+let data={
+
+order:
+document.getElementById("order").value,
+
+description:
+document.getElementById("description").value,
+
+customer:
+document.getElementById("customer").value,
+
+payment:
+document.getElementById("payment").value
+
+};
+
+
+fetch(API,{
+
+method:"POST",
+
+body:JSON.stringify(data)
+
+})
+
+.then(response=>response.text())
+
+.then(data=>{
+
+btn.innerHTML="Saved ✓";
+
+status.innerHTML="Order saved successfully";
+
+status.style.color="green";
+
+document.getElementById("order").value="";
+
+document.getElementById("description").value="";
+
+document.getElementById("customer").value="";
+
+document.getElementById("payment").selectedIndex=0;
+
+loadData();
+
+setTimeout(()=>{
+
+btn.innerHTML="Save Order";
+
+btn.disabled=false;
+
+status.innerHTML="";
+
+},2000);
+
+})
+
+.catch(error=>{
+
+btn.disabled=false;
+
+btn.innerHTML="Save Order";
+
+status.innerHTML="Save failed";
+
+status.style.color="red";
+
+});
+
+}
+
+
+
+function search(){
+
+let orderNo=
+
+document.getElementById("searchOrder").value;
+
+if(orderNo=="") return;
+
+
+fetch(API+"?search="+orderNo)
+
+.then(response=>response.json())
+
+.then(data=>{
+
+document.getElementById("result")
+
+.innerHTML=
+
+`
+
+<br>
+
+<b>Search Result</b><br><br>
+
+Order Number:
+${data.order}<br><br>
+
+Description:
+${data.description}<br><br>
+
+Customer Number:
+${data.customer}<br><br>
+
+Payment:
+${data.payment}<br>
+
+`;
+
+})
+
+.catch(()=>{
+
+document.getElementById("result")
+
+.innerHTML="No record found";
+
+});
+
+}
+
+
+
+function loadData(){
+
+fetch(API)
+
+.then(response=>response.json())
+
+.then(data=>{
+
+let html="";
+
+for(let i=1;i<data.length;i++){
+
+html+=`
+
+<tr>
+
+<td>${data[i][0]}</td>
+
+<td>${data[i][1]}</td>
+
+<td>${data[i][2]}</td>
+
+<td>${data[i][3]}</td>
+
+</tr>
+
+`;
+
+}
+
+document.getElementById("tbody").innerHTML=html;
+
+});
+
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
