@@ -22,10 +22,6 @@ border-radius:10px;
 box-shadow:0 0 10px rgba(0,0,0,.1);
 }
 
-h2,h3{
-margin-bottom:15px;
-}
-
 input,select,button{
 width:100%;
 padding:12px;
@@ -40,34 +36,21 @@ background:#0066ff;
 color:white;
 border:none;
 cursor:pointer;
-font-size:16px;
-}
-
-button:hover{
-opacity:.9;
 }
 
 button:disabled{
 opacity:.6;
-cursor:not-allowed;
-}
-
-#status{
-margin-top:10px;
-font-weight:bold;
 }
 
 table{
 width:100%;
 border-collapse:collapse;
 margin-top:20px;
-background:white;
 }
 
 th,td{
 padding:12px;
 border:1px solid #ddd;
-text-align:left;
 }
 
 th{
@@ -82,28 +65,45 @@ background:#f7f7f7;
 .searchBox{
 display:flex;
 gap:10px;
+align-items:center;
 margin-top:10px;
 }
 
 .searchBox input{
 flex:1;
+width:auto;
+min-width:250px;
+}
+
+.searchBox button{
+width:150px;
+flex:none;
+margin-top:10px;
 }
 
 </style>
 
 </head>
-
 <body>
 
 <div class="container">
 
 <h2>Order Management System</h2>
 
-<input id="order" placeholder="Order Number">
+<input id="order" 
+type="number"
+inputmode="numeric"
+placeholder="Order Number"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 <input id="description" placeholder="Description">
 
-<input id="customer" placeholder="Customer Number">
+<input id="customer" 
+type="number"
+inputmode="numeric"
+placeholder="Customer Number"
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+<input id="amount" type="number" placeholder="Amount">
 
 <select id="payment">
 <option value="Paid Online">Paid Online</option>
@@ -122,7 +122,13 @@ flex:1;
 
 <div class="searchBox">
 
-<input id="searchOrder" placeholder="Enter Order Number">
+<input
+id="searchOrder"
+type="tel"
+placeholder="Enter Order Number"
+inputmode="numeric"
+pattern="[0-9]*"
+oninput="this.value=this.value.replace(/\D/g,'')">
 
 <button onclick="search()">Search</button>
 
@@ -142,14 +148,13 @@ flex:1;
 <th>Order No.</th>
 <th>Description</th>
 <th>Customer No.</th>
+<th>Amount</th>
 <th>Payment</th>
 </tr>
 
 </thead>
 
-<tbody id="tbody">
-
-</tbody>
+<tbody id="tbody"></tbody>
 
 </table>
 
@@ -158,62 +163,46 @@ flex:1;
 <script>
 
 const API="https://script.google.com/macros/s/AKfycbxScIAIu1hKFd42-LL95bLErkG-iWWiBCi_KFwLhr9_7DEE1_rYbZkpVplYvnFdQvdx/exec";
-// paste your Google Apps Script URL here
-
 
 function save(){
 
 let btn=document.getElementById("saveBtn");
-
 let status=document.getElementById("status");
 
 btn.disabled=true;
-
 btn.innerHTML="Saving...";
-
-status.innerHTML="";
 
 let data={
 
-order:
-document.getElementById("order").value,
+order:document.getElementById("order").value,
 
-description:
-document.getElementById("description").value,
+description:document.getElementById("description").value,
 
-customer:
-document.getElementById("customer").value,
+customer:document.getElementById("customer").value,
 
-payment:
-document.getElementById("payment").value
+amount:document.getElementById("amount").value,
+
+payment:document.getElementById("payment").value
 
 };
 
-
 fetch(API,{
-
 method:"POST",
-
 body:JSON.stringify(data)
-
 })
 
-.then(response=>response.text())
+.then(r=>r.text())
 
-.then(data=>{
+.then(()=>{
 
 btn.innerHTML="Saved ✓";
 
-status.innerHTML="Order saved successfully";
-
-status.style.color="green";
+status.innerHTML="Order saved";
 
 document.getElementById("order").value="";
-
 document.getElementById("description").value="";
-
 document.getElementById("customer").value="";
-
+document.getElementById("amount").value="";
 document.getElementById("payment").selectedIndex=0;
 
 loadData();
@@ -221,39 +210,33 @@ loadData();
 setTimeout(()=>{
 
 btn.innerHTML="Save Order";
-
 btn.disabled=false;
-
 status.innerHTML="";
 
 },2000);
-
-})
-
-.catch(error=>{
-
-btn.disabled=false;
-
-btn.innerHTML="Save Order";
-
-status.innerHTML="Save failed";
-
-status.style.color="red";
 
 });
 
 }
 
-
-
 function search(){
 
 let orderNo=
-
 document.getElementById("searchOrder").value;
 
-if(orderNo=="") return;
+if(orderNo==""){
 
+alert("Enter Order Number");
+return;
+
+}
+
+if(!/^\d+$/.test(orderNo)){
+
+alert("Order Number must contain numbers only");
+return;
+
+}
 
 fetch(API+"?search="+orderNo)
 
@@ -261,11 +244,7 @@ fetch(API+"?search="+orderNo)
 
 .then(data=>{
 
-document.getElementById("result")
-
-.innerHTML=
-
-`
+document.getElementById("result").innerHTML=`
 
 <br>
 
@@ -280,8 +259,11 @@ ${data.description}<br><br>
 Customer Number:
 ${data.customer}<br><br>
 
+Amount:
+${data.amount}<br><br>
+
 Payment:
-${data.payment}<br>
+${data.payment}
 
 `;
 
@@ -289,21 +271,18 @@ ${data.payment}<br>
 
 .catch(()=>{
 
-document.getElementById("result")
-
-.innerHTML="No record found";
+document.getElementById("result").innerHTML=
+"No record found";
 
 });
 
 }
 
-
-
 function loadData(){
 
 fetch(API)
 
-.then(response=>response.json())
+.then(r=>r.json())
 
 .then(data=>{
 
@@ -316,12 +295,10 @@ html+=`
 <tr>
 
 <td>${data[i][0]}</td>
-
 <td>${data[i][1]}</td>
-
 <td>${data[i][2]}</td>
-
 <td>${data[i][3]}</td>
+<td>${data[i][4]}</td>
 
 </tr>
 
